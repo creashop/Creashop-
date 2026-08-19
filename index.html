@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Creashop YaMi | Panel de Control</title>
+    <title>Socio CreaShop | Panel de Control</title>
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/48/flash-on.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -65,6 +65,8 @@
         .badge-gratis { background: #e2e8f0; color: #475569; font-weight: 800; padding: 4px 10px; border-radius: 8px; font-size: 10px; display: inline-block; }
         .timer-pro { font-size: 11px; color: #b8860b; font-weight: 700; margin-top: 4px; display: block; }
 
+        .btn-edit-nombre { background: none; border: none; color: var(--azul); cursor: pointer; font-size: 12px; margin-left: 5px; }
+
         @keyframes shimmer {
             0% { background-position: -200px 0; }
             100% { background-position: calc(200px + 100%) 0; }
@@ -86,6 +88,7 @@
 
 <div id="toast"></div>
 
+<!-- MODAL ELIMINAR PRODUCTO -->
 <div id="confirm-del-modal" class="modal-confirm">
     <div class="modal-card">
         <i class="fas fa-trash-alt" style="font-size: 40px; color: var(--rojo); margin-bottom: 10px;"></i>
@@ -95,10 +98,22 @@
     </div>
 </div>
 
+<!-- MODAL CAMBIAR NOMBRE DE TIENDA -->
+<div id="modal-edit-nombre" class="modal-confirm">
+    <div class="modal-card">
+        <i class="fas fa-store" style="font-size: 35px; color: var(--naranja); margin-bottom: 10px;"></i>
+        <h3>Nombre de la Tienda</h3>
+        <label style="text-align: left;">Nuevo Nombre</label>
+        <input type="text" id="nuevo-nombre-tienda" placeholder="Ej. Mi Tienda Express">
+        <button class="btn btn-naranja" onclick="guardarNuevoNombreTienda()" style="margin-bottom: 8px;">GUARDAR CAMBIOS</button>
+        <button class="btn" style="background: var(--gris); color: var(--oscuro); padding: 10px;" onclick="cerrarModalNombre()">CANCELAR</button>
+    </div>
+</div>
+
 <!-- VISTA 1: INICIAR SESIÓN -->
 <div id="view-login" class="view" style="display: block;">
     <div class="card">
-        <div class="logo-container"><div class="yami-icon"><i class="fas fa-bolt"></i></div><h1 style="margin:5px 0; font-size:24px;">Creashop Socios</h1></div>
+        <div class="logo-container"><div class="yami-icon"><i class="fas fa-bolt"></i></div><h1 style="margin:5px 0; font-size:24px;">Socio CreaShop</h1></div>
         <h2>Panel de Control</h2>
         <label>WhatsApp</label>
         <div style="display: flex; gap: 8px; margin: 5px 0 12px;">
@@ -155,7 +170,10 @@
                     <input type="file" id="panel-foto-input" accept="image/*" style="display:none;">
                 </div>
                 <div>
-                    <span id="header-tienda" style="font-weight:900; color:var(--oscuro); font-size:14px;">...</span><br>
+                    <div style="display: flex; align-items: center;">
+                        <span id="header-tienda" style="font-weight:900; color:var(--oscuro); font-size:14px;">...</span>
+                        <button class="btn-edit-nombre" onclick="abrirModalNombre()" title="Editar nombre de la tienda"><i class="fas fa-edit"></i></button>
+                    </div>
                     <span id="plan-badge" class="badge-gratis">GRATIS</span>
                     <span id="contador-pro" class="timer-pro" style="display:none;"></span>
                 </div>
@@ -234,7 +252,6 @@
 
     const app = initializeApp(firebaseConfig);
     
-    // Conexión ajustada para evitar fallos en móviles
     const db = initializeFirestore(app, {
       experimentalLongPolling: true
     });
@@ -248,6 +265,7 @@
     let esPRO = false;
     let esGratisExpirado = false;
     let visitasActuales = -1; 
+    let socioDocId = null;
 
     window.switchView = (id) => { 
         document.querySelectorAll('.view').forEach(v => v.style.display = 'none'); 
@@ -314,9 +332,10 @@
     document.getElementById('panel-foto-input').onchange = async (e) => {
         if(!e.target.files[0]) return;
         const foto = await optimizarImagen(e.target.files[0], 300);
-        const q = query(collection(db, "socios"), where("celular", "==", sesion.celular));
-        const snap = await getDocs(q);
-        snap.forEach(async (d) => { await updateDoc(doc(db, "socios", d.id), { fotoPerfil: foto }); notify("Foto actualizada"); });
+        if(socioDocId) {
+            await updateDoc(doc(db, "socios", socioDocId), { fotoPerfil: foto });
+            notify("Foto de perfil actualizada");
+        }
     };
 
     document.getElementById('p-file-input').onchange = async (e) => {
@@ -389,6 +408,32 @@
             localStorage.setItem('vendedorActual', JSON.stringify(sesion));
             initPanel();
         } else notify("Número o código incorrectos");
+    };
+
+    /* FUNCIONALIDAD ACTUALIZAR NOMBRE TIENDA */
+    window.abrirModalNombre = () => {
+        document.getElementById('nuevo-nombre-tienda').value = sesion.tienda || '';
+        document.getElementById('modal-edit-nombre').style.display = 'flex';
+    };
+
+    window.cerrarModalNombre = () => {
+        document.getElementById('modal-edit-nombre').style.display = 'none';
+    };
+
+    window.guardarNuevoNombreTienda = async () => {
+        const nuevoNombre = document.getElementById('nuevo-nombre-tienda').value.trim();
+        if(!nuevoNombre) return notify("Ingresa un nombre válido");
+        
+        if (socioDocId) {
+            await updateDoc(doc(db, "socios", socioDocId), { nombreTienda: nuevoNombre });
+            sesion.tienda = nuevoNombre;
+            localStorage.setItem('vendedorActual', JSON.stringify(sesion));
+            document.getElementById('header-tienda').innerText = nuevoNombre;
+            notify("✅ Nombre de tienda actualizado");
+            cerrarModalNombre();
+        } else {
+            notify("Error al identificar la tienda");
+        }
     };
 
     window.guardarProducto = async () => {
@@ -482,7 +527,7 @@
         if(!localStorage.getItem('guia_oculta_' + sesion.celular)) document.getElementById('guia-inicio').style.display = 'block';
         
         document.getElementById('btn-ver-tienda-link').href = obtenerUrlTienda();
-        const msg = encodeURIComponent(`Hola, deseo activar mi suscripción PRO en YaMi para la tienda: ${sesion.tienda} (${sesion.celular})`);
+        const msg = encodeURIComponent(`Hola, deseo activar mi suscripción PRO en CreaShop para la tienda: ${sesion.tienda} (${sesion.celular})`);
         document.getElementById('btn-wa-pro').href = `https://wa.me/573155445183?text=${msg}`;
 
         const lista = document.getElementById('lista-productos');
@@ -491,11 +536,13 @@
         `;
 
         onSnapshot(query(collection(db, "socios"), where("celular", "==", sesion.celular)), (snap) => {
-            snap.forEach(doc => {
-                const d = doc.data();
+            snap.forEach(documentSnap => {
+                socioDocId = documentSnap.id;
+                const d = documentSnap.data();
                 if(visitasActuales !== -1 && d.visitas > visitasActuales) notify("🔥 ¡Alguien está viendo tu tienda!");
                 visitasActuales = d.visitas;
                 
+                sesion.tienda = d.nombreTienda;
                 document.getElementById('header-tienda').innerText = d.nombreTienda;
                 if(d.fotoPerfil) document.getElementById('panel-logo-box').innerHTML = `<img src="${d.fotoPerfil}">`;
                 
@@ -599,10 +646,14 @@
         bloquearSegunPlan();
     };
 
-    // SE ELIMINA LA AUTO-CARGA: SIEMPRE ABRE EN INICIAR SESIÓN
-    localStorage.removeItem('vendedorActual');
-    sesion = null;
-    switchView('view-login');
+    // AUTO-CARGA DE SESIÓN
+    const sesionGuardada = localStorage.getItem('vendedorActual');
+    if(sesionGuardada) {
+        sesion = JSON.parse(sesionGuardada);
+        initPanel();
+    } else {
+        switchView('view-login');
+    }
 </script>
 </body>
 </html>
