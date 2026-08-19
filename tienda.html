@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda | YaMi</title>
+    <!-- COMENTARIO DE CONTROL DE VERSIÓN: CÓDIGO BLOQUEO SÓLO POR DÍAS (10 DÍAS GRATIS) -->
+    <link rel="icon" type="image/png" href="https://i.ibb.co/CRZNPpf/1770824892177.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --naranja: #ff6b00; --oscuro: #232f3e; --gris: #f0f2f5; --verde: #25d366; --azul: #2196f3; --oro: #ffb100; --rojo: #d91e18; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--gris); margin: 0; padding-top: 85px; overflow-x: hidden; }
+
+        #bloqueo-aviso { 
+            display: none; background: var(--rojo); color: white; text-align: center; padding: 10px; font-size: 12px; font-weight: bold; position: fixed; top: 70px; left: 0; right: 0; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .store-header { 
+            position: fixed; top: 0; left: 0; right: 0; background: var(--oscuro); color: white; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; border-bottom: 3px solid var(--naranja); box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .header-content { display: flex; align-items: center; gap: 12px; }
+        .store-logo { width: 45px; height: 45px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--naranja); flex-shrink: 0; overflow: hidden; }
+        .store-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .store-name { margin: 0; font-size: 1.1rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .badge-mini { font-size: 9px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; font-weight: 800; background: var(--oro); color: var(--oscuro); }
+
+        .container { padding: 10px; max-width: 800px; margin: auto; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.05); border: 1px solid #eee; display: flex; flex-direction: column; }
+        .image-container { height: 140px; background: #f8fafc; position: relative; overflow: hidden; }
+        
+        .info { padding: 8px; text-align: center; flex-grow: 1; cursor: pointer; }
+        .info h3 { margin: 0; font-size: 12px; color: var(--oscuro); height: 32px; overflow: hidden; line-height: 1.3; }
+        .price { font-size: 16px; font-weight: 800; color: var(--rojo); margin: 5px 0; display: block; }
+
+        .card-action { padding: 0 8px 12px; }
+        .btn-add-ask { background: var(--oscuro); color: white; border: none; padding: 10px; width: 100%; border-radius: 10px; font-size: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s; }
+
+        .shop-blocked { background: #95a5a6 !important; pointer-events: none !important; opacity: 0.6; }
+
+        .header-cart-btn { background: #fff5eb; border: 1.5px solid var(--naranja); color: var(--naranja); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; font-size: 16px; transition: 0.2s; }
+        .header-cart-badge { position: absolute; top: -5px; right: -5px; background: var(--rojo); color: white; font-size: 9px; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+
+        .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(2px); }
+        .modal-content { background: white; margin: 8vh auto; padding: 20px; width: 85%; max-width: 450px; border-radius: 20px; position: relative; max-height: 80vh; overflow-y: auto; }
+        .close { position: absolute; top: 10px; right: 15px; font-size: 28px; color: #aaa; cursor: pointer; z-index: 10; }
+        .carousel { display: flex; overflow-x: auto; snap-type: x mandatory; gap: 10px; margin-bottom: 15px; scrollbar-width: none; border-radius: 10px; }
+        .carousel img { width: 100%; flex-shrink: 0; snap-align: start; height: 250px; object-fit: contain; background: #f9f9f9; }
+
+        .cart-panel { display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: white; z-index: 4000; padding: 20px; box-sizing: border-box; flex-direction: column; }
+        .cart-header { display: flex; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; flex-shrink: 0; }
+        #cart-items { flex-grow: 1; overflow-y: auto; padding: 10px 0; }
+        .cart-footer { border-top: 1px solid #eee; padding-top: 15px; flex-shrink: 0; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f2f2; font-size: 14px; gap: 10px; }
+        textarea { width: 100%; height: 70px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; padding: 10px; font-family: inherit; resize: none; box-sizing: border-box; }
+        .btn-send-wa { background: var(--verde); color: white; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        .skeleton {
+            background: #f6f7f8;
+            background-image: linear-gradient(90deg, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-repeat: no-repeat;
+            background-size: 200px 100%;
+            animation: shimmer 1.2s infinite linear;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+<body> 
+
+<div id="bloqueo-aviso"><i class="fas fa-lock"></i> TIENDA EN PAUSA POR SUSCRIPCIÓN VENCIDA</div>
+
+<div class="store-header">
+    <div class="header-content">
+        <div class="store-logo" id="store-logo-container"><i class="fas fa-store"></i></div>
+        <div class="store-info-text">
+            <h1 class="store-name" id="display-name">Cargando...</h1>
+            <div id="display-badge"></div>
+        </div>
+    </div>
+    <button class="header-cart-btn" onclick="toggleCart(true)" id="header-cart-btn">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="header-cart-count" class="header-cart-badge" style="display:none;">0</span>
+    </button>
+</div>
+
+<div class="container">
+    <div class="grid" id="products-grid">
+        <div class="card skeleton" style="height: 200px;"></div>
+        <div class="card skeleton" style="height: 200px;"></div>
+    </div>
+    <div id="no-products" style="display:none; text-align: center; padding: 50px 20px; color: #999;"><p>No hay productos publicados.</p></div>
+</div>
+
+<div id="product-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div id="carousel" class="carousel"></div>
+        <h2 id="modal-name" style="margin:0; font-size:1.2rem;"></h2>
+        <p id="modal-price" style="color:var(--rojo); font-weight:800; font-size:1.4rem; margin:10px 0;"></p>
+        <p id="modal-desc" style="color:#555; font-size:0.9rem; line-height:1.4;"></p>
+        <button id="add-to-cart-modal" style="background:var(--oscuro); color:white; border:none; padding:15px; width:100%; border-radius:12px; font-weight:bold; margin-top:10px; cursor:pointer;">AÑADIR PARA PREGUNTAR</button>
+    </div>
+</div>
+
+<div id="cart-panel" class="cart-panel">
+    <div class="cart-header">
+        <i class="fas fa-chevron-left" onclick="toggleCart(false)" style="font-size: 24px; cursor: pointer;"></i>
+        <h2 style="margin: 0 0 0 15px; font-size: 1.3rem;">Mi Pedido</h2>
+    </div>
+    <div id="cart-items"></div>
+    <div class="cart-footer">
+        <textarea id="order-notes" placeholder="Se encuentra disponible..."></textarea>
+        <div id="cart-total" style="font-size: 22px; font-weight: 900; margin-bottom: 15px; text-align: right; color: var(--oscuro);">Total: $0</div>
+        <button class="btn-send-wa" id="final-send-btn" onclick="sendOrder()">
+            <i class="fab fa-whatsapp"></i> ENVIAR A WHATSAPP
+        </button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, updateDoc, doc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // NUEVAS CREDENCIALES CREASHOP
+    const firebaseConfig = {
+      apiKey: "AIzaSyDWiqFotlf4ItAWuJ_7U2_DEVGMTAcQSX4",
+      authDomain: "creashop-94c85.firebaseapp.com",
+      projectId: "creashop-94c85",
+      storageBucket: "creashop-94c85.firebasestorage.app",
+      messagingSenderId: "913730004768",
+      appId: "1:913730004768:web:bc3307610e236999d31945"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeId = urlParams.get('id');
+
+    let storeData = null;
+    let storeDocId = null;
+    let cart = [];
+    let currentProduct = null;
+    let isBlocked = false;
+
+    function parsearFecha(fechaFB) {
+        if (!fechaFB) return null;
+        if (typeof fechaFB.toDate === 'function') return fechaFB.toDate().getTime();
+        if (fechaFB instanceof Date) return fechaFB.getTime();
+        if (typeof fechaFB === 'number') return fechaFB;
+        if (typeof fechaFB === 'string') return new Date(fechaFB).getTime();
+        return null;
+    }
+
+    async function start() {
+        if (!storeId) return;
+        
+        const qSocio = query(collection(db, "socios"), where("celular", "==", storeId));
+        const snapSocio = await getDocs(qSocio);
+        
+        snapSocio.forEach(async (documentSnap) => {
+            storeDocId = documentSnap.id;
+            storeData = documentSnap.data();
+            document.getElementById('display-name').innerText = storeData.nombreTienda;
+            if(storeData.fotoPerfil) document.getElementById('store-logo-container').innerHTML = `<img src="${storeData.fotoPerfil}">`;
+            document.getElementById('display-badge').innerHTML = storeData.plan === 'pro' ? '<span class="badge-mini">VERIFICADO 👑</span>' : '';
+
+            isBlocked = false;
+
+            if (storeData.plan === 'gratis') {
+                const fechaRegistro = parsearFecha(storeData.fecha);
+                
+                if (fechaRegistro) {
+                    const ahora = new Date().getTime();
+                    const diezDiasMs = 10 * 24 * 60 * 60 * 1000;
+                    
+                    if ((ahora - fechaRegistro) >= diezDiasMs) {
+                        isBlocked = true;
+                    }
+                }
+            }
+
+            if (isBlocked) {
+                document.getElementById('bloqueo-aviso').style.display = 'block';
+                document.getElementById('header-cart-btn').style.display = 'none';
+                document.getElementById('add-to-cart-modal').classList.add('shop-blocked');
+                document.getElementById('final-send-btn').classList.add('shop-blocked');
+            } else {
+                document.getElementById('bloqueo-aviso').style.display = 'none';
+                document.getElementById('header-cart-btn').style.display = 'flex';
+                document.getElementById('add-to-cart-modal').classList.remove('shop-blocked');
+                document.getElementById('final-send-btn').classList.remove('shop-blocked');
+            }
+
+            try {
+                await updateDoc(doc(db, "socios", storeDocId), {
+                    visitas: increment(1)
+                });
+            } catch (err) {
+                console.error("Error al registrar visita:", err);
+            }
+        });
+
+        const qProd = query(collection(db, "productos"), where("waVendedor", "==", storeId));
+        onSnapshot(qProd, (snapshot) => {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = '';
+            let prods = [];
+            snapshot.forEach(d => prods.push({id: d.id, ...d.data()}));
+
+            if(prods.length === 0) {
+                document.getElementById('no-products').style.display = 'block';
+            } else {
+                document.getElementById('no-products').style.display = 'none';
+                prods.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    const pData = btoa(unescape(encodeURIComponent(JSON.stringify(p)))); 
+                    const blockClass = isBlocked ? 'shop-blocked' : '';
+                    
+                    const listaImgs = (p.imagenes && p.imagenes.length > 0) ? p.imagenes : [p.imagen];
+                    
+                    let imagenesHTML = '';
+                    if (listaImgs.length > 1) {
+                        let slides = listaImgs.map(img => `
+                            <div style="min-width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#f8fafc; position:relative;">
+                                <div style="position:absolute; inset:0; background-image:url('${img}'); background-size:cover; filter:blur(12px); opacity:0.3;"></div>
+                                <img src="${img}" style="max-width:100%; max-height:100%; object-fit:contain; position:relative; z-index:2;">
+                            </div>
+                        `).join('');
+
+                        imagenesHTML = `
+                            <div style="display:flex; overflow-x:auto; snap-type:x mandatory; scrollbar-width:none; width:100%; height:100%;" onclick="openDetail('${pData}')">
+                                ${slides}
+                            </div>
+                            <div style="position:absolute; bottom:5px; right:5px; background:rgba(0,0,0,0.6); color:white; font-size:9px; padding:2px 6px; border-radius:10px; pointer-events:none; z-index:3;">
+                                <i class="fas fa-images"></i> ${listaImgs.length}
+                            </div>
+                        `;
+                    } else {
+                        imagenesHTML = `
+                            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#f8fafc; position:relative;" onclick="openDetail('${pData}')">
+                                <div style="position:absolute; inset:0; background-image:url('${p.imagen}'); background-size:cover; filter:blur(12px); opacity:0.3;"></div>
+                                <img src="${p.imagen}" style="max-width:100%; max-height:100%; object-fit:contain; position:relative; z-index:2;">
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="image-container">${imagenesHTML}</div>
+                        <div class="info" onclick="openDetail('${pData}')">
+                            <h3>${p.nombre}</h3>
+                            <span class="price">$${Number(p.precio).toLocaleString()}</span>
+                        </div>
+                        <div class="card-action">
+                            <button class="btn-add-ask ${blockClass}" onclick="addToCartDirect(this, '${pData}')">Añadir para preguntar</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        });
+    }
+
+    window.openDetail = (encodedData) => {
+        const p = JSON.parse(decodeURIComponent(escape(atob(encodedData))));
+        currentProduct = p;
+        document.getElementById('modal-name').innerText = p.nombre;
+        document.getElementById('modal-price').innerText = `$${Number(p.precio).toLocaleString()}`;
+        document.getElementById('modal-desc').innerText = p.descripcion || 'Sin descripción disponible.';
+        const carousel = document.getElementById('carousel');
+        carousel.innerHTML = '';
+        const imgs = (p.imagenes && p.imagenes.length > 0) ? p.imagenes : [p.imagen];
+        imgs.forEach(url => carousel.innerHTML += `<img src="${url}">`);
+        document.getElementById('product-modal').style.display = 'block';
+    }
+
+    window.addToCartDirect = async (btnElement, encodedData) => {
+        if(isBlocked) return;
+        const p = JSON.parse(decodeURIComponent(escape(atob(encodedData))));
+        
+        const existe = cart.some(item => item.id === p.id);
+        if (existe) {
+            btnElement.innerText = "¡ESTE PRODUCTO YA ESTÁ AÑADIDO!";
+            btnElement.style.background = "#d91e18";
+            setTimeout(() => { 
+                btnElement.innerText = "AÑADIR PARA PREGUNTAR"; 
+                btnElement.style.background = "#232f3e"; 
+            }, 1500);
+            return;
+        }
+
+        cart.push(p);
+        updateCartUI();
+
+        if (storeDocId) {
+            try {
+                await updateDoc(doc(db, "socios", storeDocId), {
+                    clics: increment(1)
+                });
+            } catch (err) {
+                console.error("Error al actualizar interesados:", err);
+            }
+        }
+
+        btnElement.innerText = "¡AÑADIDO!";
+        btnElement.style.background = "#25d366";
+        setTimeout(() => { btnElement.innerText = "AÑADIR PARA PREGUNTAR"; btnElement.style.background = "#232f3e"; }, 800);
+    }
+
+    window.closeModal = () => document.getElementById('product-modal').style.display = 'none';
+
+    document.getElementById('add-to-cart-modal').onclick = async () => {
+        if(isBlocked) return;
+        
+        const existe = cart.some(item => item.id === currentProduct.id);
+        if (existe) {
+            const modalBtn = document.getElementById('add-to-cart-modal');
+            modalBtn.innerText = "¡YA ESTÁ EN EL CARRITO!";
+            modalBtn.style.background = "#d91e18";
+            setTimeout(() => { 
+                modalBtn.innerText = "AÑADIR PARA PREGUNTAR"; 
+                modalBtn.style.background = "#232f3e"; 
+            }, 1500);
+            return;
+        }
+
+        cart.push(currentProduct);
+        updateCartUI();
+
+        if (storeDocId) {
+            try {
+                await updateDoc(doc(db, "socios", storeDocId), {
+                    clics: increment(1)
+                });
+            } catch (err) {
+                console.error("Error al actualizar interesados:", err);
+            }
+        }
+
+        closeModal();
+    };
+
+    function updateCartUI() {
+        const headerBadge = document.getElementById('header-cart-count');
+        if (cart.length > 0) {
+            headerBadge.style.display = 'flex';
+            headerBadge.innerText = cart.length;
+        } else {
+            headerBadge.style.display = 'none';
+        }
+
+        const list = document.getElementById('cart-items');
+        list.innerHTML = '';
+        let total = 0;
+        cart.forEach((item, i) => {
+            total += Number(item.precio);
+            const imgItem = (item.imagenes && item.imagenes.length > 0) ? item.imagenes[0] : (item.imagen || 'https://via.placeholder.com/150');
+            list.innerHTML += `
+                <div class="cart-item">
+                    <img src="${imgItem}" style="width: 45px; height: 45px; border-radius: 8px; object-fit: cover; border: 1px solid #eee; flex-shrink: 0;">
+                    <div style="flex-grow: 1;">
+                        <span style="display: block; font-weight: 600; color: var(--oscuro); font-size: 13px; line-height: 1.2;">${item.nombre}</span>
+                        <span style="color: var(--rojo); font-weight: 800; font-size: 13px;">$${Number(item.precio).toLocaleString()}</span>
+                    </div>
+                    <i class="fas fa-trash" onclick="remove(${i})" style="color: var(--rojo); cursor: pointer; padding: 5px;"></i>
+                </div>
+            `;
+        });
+        document.getElementById('cart-total').innerText = `Total: $${total.toLocaleString()}`;
+    }
+
+    window.remove = (i) => { cart.splice(i,1); updateCartUI(); }
+    window.toggleCart = (s) => { 
+        if(isBlocked && s) return;
+        document.getElementById('cart-panel').style.display = s ? 'flex' : 'none'; 
+    }
+
+    window.sendOrder = () => {
+        if(isBlocked || cart.length === 0) return;
+        let m = `*PEDIDO DESDE YAMI - ${storeData.nombreTienda.toUpperCase()}*%0A%0A`;
+        let t = 0;
+        cart.forEach(i => { m += `• ${i.nombre} ($${Number(i.precio).toLocaleString()})%0A`; t += Number(i.precio); });
+        const n = document.getElementById('order-notes').value;
+        if(n) m += `%0A*Nota:* ${n}%0A`;
+        m += `%0A*TOTAL A PAGAR: $${t.toLocaleString()}*%0A%0A_¿Están disponibles?_`;
+        
+        window.open(`https://wa.me/${storeId}?text=${m}`, '_blank');
+        
+        cart = [];
+        updateCartUI();
+        toggleCart(false);
+        document.getElementById('order-notes').value = '';
+    }
+
+    start();
+</script>
+
+<div style="text-align: center; padding: 25px 20px; background: #ffffff; border-top: 1px solid #f0f2f5; margin-top: 40px;">
+    <div style="margin-bottom: 8px; opacity: 0.7;">
+        <i class="fas fa-user-lock" style="font-size: 12px; color: #64748b;"></i>
+        <span style="font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;"> Compras Seguras</span>
+    </div>
+
+    <a href="condiciones.html" style="font-size: 12px; color: #ff6b00; text-decoration: none; font-weight: 800; border-bottom: 1px solid #ff6b00; padding-bottom: 2px;">
+        Políticas de Privacidad y Términos
+    </a>
+
+    <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 12px;">
+        <p style="font-size: 11px; color: #94a3b8; margin: 0;">&copy; 2026 YaMi Digital</p>
+        <img src="https://img.icons8.com/color/48/colombia.png" style="width: 14px; height: 14px; vertical-align: middle;">
+    </div>
+</div>
+
+</body>
+</html>
