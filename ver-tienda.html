@@ -109,7 +109,7 @@
 <div id="cart-panel" class="cart-panel">
     <div class="cart-header">
         <i class="fas fa-chevron-left" onclick="toggleCart(false)" style="font-size: 24px; cursor: pointer;"></i>
-        <h2 style="margin: 0 0 0 15px; font-size: 1.3rem;">Mi Pedido</h2>
+        <h2 style="margin: 0 0 0 15px; font-size: 1.3rem;">Estoy interesado en este producto</h2>
     </div>
     <div id="cart-items"></div>
     <div class="cart-footer">
@@ -381,7 +381,7 @@
 
     window.sendOrder = () => {
         if(isBlocked || cart.length === 0) return;
-        let m = `*PEDIDO DESDE YAMI - ${storeData.nombreTienda.toUpperCase()}*%0A%0A`;
+        let m = `*PEDIDO DESDE CreaShop - ${storeData.nombreTienda.toUpperCase()}*%0A%0A`;
         let t = 0;
         cart.forEach(i => { m += `• ${i.nombre} ($${Number(i.precio).toLocaleString()})%0A`; t += Number(i.precio); });
         const n = document.getElementById('order-notes').value;
@@ -410,7 +410,7 @@
     </a>
 
     <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 12px;">
-        <p style="font-size: 11px; color: #94a3b8; margin: 0;">&copy; 2026 YaMi Digital</p>
+        <p style="font-size: 11px; color: #94a3b8; margin: 0;">&copy; 2026 CreaShop Digital</p>
         <img src="https://img.icons8.com/color/48/colombia.png" style="width: 14px; height: 14px; vertical-align: middle;">
     </div>
 </div>
